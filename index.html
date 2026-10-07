@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Dibuja Música</title>
+
+    <link rel="stylesheet" href="diseño.css">
+</head>
+
+<body>
+
+    <main class="app">
+
+        <header class="header">
+            <div>
+                <h1>🎵 Dibuja Música</h1>
+                <p>Dibuja y convierte tus líneas en música</p>
+            </div>
+        </header>
+
+
+        <!-- CANVAS -->
+        <section class="canvas-section">
+
+            <div class="canvas-container">
+
+                <canvas id="musicCanvas"></canvas>
+
+                <div class="axis-label axis-y">
+                    NOTAS ↑
+                </div>
+
+                <div class="axis-label axis-x">
+                    TIEMPO →
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- CONTROLES DE DIBUJO -->
+        <section class="drawing-tools">
+
+            <div class="tool-section">
+
+                <div class="section-title">
+                    🖌️ Herramienta
+                </div>
+
+                <div class="tool-buttons">
+
+                    <button
+                        class="tool-button active"
+                        data-tool="brush">
+                        🖌️ Redondo
+                    </button>
+
+                    <button
+                        class="tool-button"
+                        data-tool="pointed">
+                        ✒️ Punta
+                    </button>
+
+                    <button
+                        class="tool-button"
+                        data-tool="soft">
+                        🌫️ Suave
+                    </button>
+
+                    <button
+                        class="tool-button"
+                        data-tool="eraser">
+                        🧽 Borrador
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <div class="tool-section size-section">
+
+                <div class="section-title">
+                    📏 Tamaño del pincel
+                </div>
+
+                <div class="size-row">
+
+                    <span class="size-min">1</span>
+
+                    <input
+                        type="range"
+                        id="brushSize"
+                        min="1"
+                        max="40"
+                        value="5">
+
+                    <span id="brushSizeValue">
+                        5 px
+                    </span>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- PALETA -->
+        <section class="control-panel">
+
+            <div class="control-block">
+
+                <h2>🎨 Color</h2>
+
+                <div id="palette" class="palette"></div>
+
+                <div class="selected-color">
+                    Color seleccionado:
+                    <strong id="selectedColorName">
+                        Rosa
+                    </strong>
+                </div>
+
+            </div>
+
+
+            <!-- LUMINOSIDAD -->
+            <div class="control-block">
+
+                <h2>☀️ Luminosidad</h2>
+
+                <div class="lightness-row">
+
+                    <span>Oscuro</span>
+
+                    <input
+                        type="range"
+                        id="lightness"
+                        min="20"
+                        max="75"
+                        value="55">
+
+                    <span>Claro</span>
+
+                </div>
+
+                <div
+                    id="lightnessValue"
+                    class="lightness-value">
+                    55%
+                </div>
+
+            </div>
+
+
+            <!-- REPRODUCCIÓN -->
+            <div class="playback-controls">
+
+                <button
+                    id="playButton"
+                    class="main-button play-button">
+                    ▶️ Reproducir
+                </button>
+
+                <button
+                    id="stopButton"
+                    class="main-button stop-button">
+                    ⏹️ Detener
+                </button>
+
+                <button
+                    id="clearButton"
+                    class="main-button clear-button">
+                    🗑️ Limpiar
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- INFORMACIÓN -->
+        <section class="info-grid">
+
+            <div class="info-box">
+
+                <h3>🎨 Colores</h3>
+
+                <p>
+                    Cada familia de color tiene un sonido diferente.
+                    El rosa representa la melodía.
+                </p>
+
+            </div>
+
+
+            <div class="info-box">
+
+                <h3>📐 Dibujo</h3>
+
+                <p>
+                    La posición horizontal representa el tiempo
+                    y la posición vertical representa la nota.
+                </p>
+
+            </div>
+
+
+            <div class="info-box">
+
+                <h3>💡 Luminosidad</h3>
+
+                <p>
+                    Cambia solamente la apariencia del dibujo,
+                    nunca el sonido.
+                </p>
+
+            </div>
+
+
+            <div class="info-box">
+
+                <h3>🖌️ Pinceles</h3>
+
+                <p>
+                    Prueba los diferentes pinceles y utiliza
+                    el borrador para modificar tus dibujos.
+                </p>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <script src="codigo.js"></script>
+
+</body>
+</html>
