@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Dibuja Música</title>
+
+    <!-- CSS externo -->
+    <link rel="stylesheet" href="diseño.css">
+</head>
+
+<body>
+
+    <div class="app">
+
+        <header>
+            <h1>🎵 Dibuja Música</h1>
+
+            <p class="subtitle">
+                Dibuja líneas y conviértelas en música
+            </p>
+        </header>
+
+
+        <!-- LIENZO -->
+
+        <div class="canvas-container">
+
+            <canvas id="musicCanvas"></canvas>
+
+            <div class="axis-y">
+                ↑ Agudo
+            </div>
+
+            <div class="axis-x">
+                Tiempo →
+            </div>
+
+        </div>
+
+
+        <!-- CONTROLES -->
+
+        <div class="panel">
+
+            <div class="buttons">
+
+                <button
+                    class="play"
+                    id="playButton">
+                    ▶ Reproducir
+                </button>
+
+                <button
+                    class="stop"
+                    id="stopButton">
+                    ■ Detener
+                </button>
+
+                <button
+                    id="clearButton">
+                    🗑 Limpiar
+                </button>
+
+            </div>
+
+
+            <!-- PALETA -->
+
+            <div class="section-title">
+                🎨 Elige un color
+            </div>
+
+            <div id="palette"></div>
+
+
+            <!-- LUMINOSIDAD -->
+
+            <div class="lightness-container">
+
+                <div class="section-title">
+                    💡 Aclarar / Oscurecer
+                </div>
+
+                <div class="lightness-row">
+
+                    <span>Oscuro</span>
+
+                    <input
+                        type="range"
+                        id="lightness"
+                        min="15"
+                        max="90"
+                        value="55">
+
+                    <span>Claro</span>
+
+                    <span id="lightnessValue">
+                        55%
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- COLOR SELECCIONADO -->
+
+            <div class="selected-info">
+
+                Color seleccionado:
+
+                <strong id="selectedColorName">
+                    Rosa — Melodía
+                </strong>
+
+            </div>
+
+
+            <!-- EXPLICACIÓN -->
+
+            <div class="info">
+
+                <div class="info-box">
+                    <strong>↔️ Horizontal</strong>
+
+                    <span>
+                        Indica cuándo suena la nota
+                    </span>
+                </div>
+
+
+                <div class="info-box">
+                    <strong>↕️ Vertical</strong>
+
+                    <span>
+                        Cambia la altura de la nota
+                    </span>
+                </div>
+
+
+                <div class="info-box">
+                    <strong>🎨 Color</strong>
+
+                    <span>
+                        Cambia el instrumento
+                    </span>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- JavaScript externo -->
+    <script src="codigo.js"></script>
+
+</body>
+</html>

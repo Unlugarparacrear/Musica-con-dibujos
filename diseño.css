@@ -1,0 +1,449 @@
+/* =========================================================
+   CONFIGURACIÓN GENERAL
+   ========================================================= */
+
+* {
+    box-sizing: border-box;
+}
+
+
+body {
+    margin: 0;
+
+    font-family:
+        Arial,
+        sans-serif;
+
+    background: #101218;
+
+    color: white;
+
+    min-height: 100vh;
+}
+
+
+.app {
+    width: min(1200px, 96%);
+
+    margin: auto;
+
+    padding:
+        20px 0 40px;
+}
+
+
+/* =========================================================
+   ENCABEZADO
+   ========================================================= */
+
+header {
+    text-align: center;
+
+    margin-bottom: 18px;
+}
+
+
+h1 {
+    margin:
+        0 0 8px;
+
+    font-size:
+        clamp(28px, 5vw, 44px);
+}
+
+
+.subtitle {
+    margin: 0;
+
+    color: #b8bcc8;
+
+    font-size: 15px;
+}
+
+
+/* =========================================================
+   CANVAS
+   ========================================================= */
+
+.canvas-container {
+    position: relative;
+
+    width: 100%;
+
+    height:
+        min(60vh, 520px);
+
+    min-height: 300px;
+
+    background:
+        linear-gradient(
+            rgba(255,255,255,0.05) 1px,
+            transparent 1px
+        ),
+        linear-gradient(
+            90deg,
+            rgba(255,255,255,0.05) 1px,
+            transparent 1px
+        );
+
+    background-size:
+        50px 50px;
+
+    border:
+        2px solid #343945;
+
+    border-radius: 16px;
+
+    overflow: hidden;
+
+    box-shadow:
+        0 10px 35px rgba(0,0,0,0.35);
+}
+
+
+#musicCanvas {
+    width: 100%;
+    height: 100%;
+
+    display: block;
+
+    cursor: crosshair;
+
+    touch-action: none;
+}
+
+
+/* =========================================================
+   INDICADORES
+   ========================================================= */
+
+.axis-x,
+.axis-y {
+    position: absolute;
+
+    color:
+        rgba(255,255,255,0.45);
+
+    pointer-events: none;
+
+    font-size: 12px;
+}
+
+
+.axis-x {
+    right: 12px;
+    bottom: 8px;
+}
+
+
+.axis-y {
+    left: 8px;
+    top: 8px;
+}
+
+
+/* =========================================================
+   PANEL
+   ========================================================= */
+
+.panel {
+    margin-top: 18px;
+
+    padding: 18px;
+
+    background: #191c24;
+
+    border:
+        1px solid #303440;
+
+    border-radius: 16px;
+}
+
+
+/* =========================================================
+   BOTONES
+   ========================================================= */
+
+.buttons {
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 10px;
+
+    margin-bottom: 18px;
+}
+
+
+button {
+    border: none;
+
+    border-radius: 10px;
+
+    padding:
+        12px 18px;
+
+    font-size: 15px;
+
+    font-weight: bold;
+
+    background: #2a2f3b;
+
+    color: white;
+
+    cursor: pointer;
+
+    transition:
+        transform 0.15s,
+        background 0.15s;
+}
+
+
+button:hover {
+    background: #383e4d;
+
+    transform:
+        translateY(-1px);
+}
+
+
+button:active {
+    transform:
+        scale(0.97);
+}
+
+
+button.play {
+    background: #2d8a55;
+}
+
+
+button.play:hover {
+    background: #36a365;
+}
+
+
+button.stop {
+    background: #a83c3c;
+}
+
+
+button.stop:hover {
+    background: #c54a4a;
+}
+
+
+/* =========================================================
+   PALETA
+   ========================================================= */
+
+.section-title {
+    font-size: 14px;
+
+    color: #bfc3ce;
+
+    margin-bottom: 10px;
+}
+
+
+#palette {
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            auto-fit,
+            minmax(75px, 1fr)
+        );
+
+    gap: 9px;
+}
+
+
+.color-button {
+    min-height: 65px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 5px;
+
+    border:
+        2px solid transparent;
+
+    padding: 8px;
+}
+
+
+.color-circle {
+    width: 28px;
+    height: 28px;
+
+    border-radius: 50%;
+
+    border:
+        2px solid
+        rgba(255,255,255,0.45);
+}
+
+
+.color-name {
+    font-size: 11px;
+
+    color: white;
+}
+
+
+.color-button.selected {
+    border-color: white;
+
+    box-shadow:
+        0 0 0 2px
+        rgba(255,255,255,0.15);
+}
+
+
+/* =========================================================
+   CONTROL DE LUMINOSIDAD
+   ========================================================= */
+
+.lightness-container {
+    margin-top: 20px;
+}
+
+
+.lightness-row {
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+}
+
+
+#lightness {
+    flex: 1;
+}
+
+
+#lightnessValue {
+    min-width: 48px;
+
+    text-align: right;
+
+    color: #c8ccd6;
+
+    font-size: 14px;
+}
+
+
+input[type="range"] {
+    accent-color: white;
+}
+
+
+/* =========================================================
+   COLOR SELECCIONADO
+   ========================================================= */
+
+.selected-info {
+    margin-top: 14px;
+
+    color: #bfc3ce;
+
+    font-size: 14px;
+}
+
+
+.selected-info strong {
+    color: white;
+}
+
+
+/* =========================================================
+   INFORMACIÓN
+   ========================================================= */
+
+.info {
+    margin-top: 18px;
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, 1fr);
+
+    gap: 10px;
+}
+
+
+.info-box {
+    background: #12151b;
+
+    border-radius: 10px;
+
+    padding: 12px;
+
+    text-align: center;
+}
+
+
+.info-box strong {
+    display: block;
+
+    margin-bottom: 4px;
+}
+
+
+.info-box span {
+    color: #aeb3bf;
+
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   MÓVIL
+   ========================================================= */
+
+@media (max-width: 650px) {
+
+    .app {
+        width: 94%;
+
+        padding-top: 12px;
+    }
+
+
+    .canvas-container {
+        height: 52vh;
+
+        min-height: 280px;
+    }
+
+
+    .buttons button {
+        flex: 1;
+
+        min-width: 100px;
+    }
+
+
+    .info {
+        grid-template-columns: 1fr;
+    }
+
+
+    #palette {
+        grid-template-columns:
+            repeat(4, 1fr);
+    }
+
+
+    .panel {
+        padding: 13px;
+    }
+}
