@@ -1,26 +1,53 @@
 /* =========================================================
    DIBUJA MÚSICA
-   JavaScript
    ========================================================= */
 
 
 /* =========================================================
-   COLORES Y SONIDOS
+   CANVAS
+   ========================================================= */
 
-   Puedes modificar esta sección fácilmente.
+const canvas = document.getElementById("musicCanvas");
+const ctx = canvas.getContext("2d");
 
-   hue  = apariencia del color
-   sound = sonido que produce
 
-   IMPORTANTE:
-   lightness NO modifica sound.
+/* =========================================================
+   CONTROLES
+   ========================================================= */
 
-   Por ejemplo:
+const paletteElement =
+    document.getElementById("palette");
 
-   rosa claro  → melodía
-   rosa oscuro → melodía
+const lightnessSlider =
+    document.getElementById("lightness");
 
-   El sonido siempre será melodía.
+const lightnessValue =
+    document.getElementById("lightnessValue");
+
+const selectedColorName =
+    document.getElementById("selectedColorName");
+
+const brushSizeSlider =
+    document.getElementById("brushSize");
+
+const brushSizeValue =
+    document.getElementById("brushSizeValue");
+
+const toolButtons =
+    document.querySelectorAll(".tool-button");
+
+const playButton =
+    document.getElementById("playButton");
+
+const stopButton =
+    document.getElementById("stopButton");
+
+const clearButton =
+    document.getElementById("clearButton");
+
+
+/* =========================================================
+   COLORES
    ========================================================= */
 
 const COLOR_FAMILIES = {
@@ -94,8 +121,6 @@ const COLOR_FAMILIES = {
     pink: {
         name: "Rosa",
         hue: 330,
-
-        /* ROSA = MELODÍA */
         sound: "melody"
     }
 
@@ -103,76 +128,26 @@ const COLOR_FAMILIES = {
 
 
 /* =========================================================
-   ELEMENTOS HTML
-   ========================================================= */
-
-const canvas =
-    document.getElementById(
-        "musicCanvas"
-    );
-
-const ctx =
-    canvas.getContext("2d");
-
-
-const palette =
-    document.getElementById(
-        "palette"
-    );
-
-
-const lightnessSlider =
-    document.getElementById(
-        "lightness"
-    );
-
-
-const lightnessValue =
-    document.getElementById(
-        "lightnessValue"
-    );
-
-
-const selectedColorName =
-    document.getElementById(
-        "selectedColorName"
-    );
-
-
-const playButton =
-    document.getElementById(
-        "playButton"
-    );
-
-
-const stopButton =
-    document.getElementById(
-        "stopButton"
-    );
-
-
-const clearButton =
-    document.getElementById(
-        "clearButton"
-    );
-
-
-/* =========================================================
-   VARIABLES
+   ESTADO
    ========================================================= */
 
 let selectedColor = "pink";
 
 let lightness =
-    Number(
-        lightnessSlider.value
-    );
+    Number(lightnessSlider.value);
+
+let currentTool = "brush";
+
+let brushSize =
+    Number(brushSizeSlider.value);
 
 let strokes = [];
 
 let currentStroke = null;
 
 let isDrawing = false;
+
+let lastPointerPoint = null;
 
 
 /* =========================================================
@@ -187,7 +162,7 @@ let activeNodes = [];
 
 
 /* =========================================================
-   NOTAS MUSICALES
+   NOTAS
    ========================================================= */
 
 const NOTES = [
@@ -217,228 +192,175 @@ const NOTES = [
 
 
 /* =========================================================
+   UTILIDADES DE COLOR
+   ========================================================= */
+
+function getColor(hue) {
+
+    return `hsl(${hue}, 80%, ${lightness}%)`;
+
+}
+
+
+/* =========================================================
    PALETA
    ========================================================= */
 
 function createPalette() {
 
-    palette.innerHTML = "";
+    paletteElement.innerHTML = "";
 
-
-    Object.entries(
-        COLOR_FAMILIES
-    ).forEach(
+    Object.entries(COLOR_FAMILIES).forEach(
         ([key, color]) => {
 
             const button =
-                document.createElement(
-                    "button"
-                );
-
+                document.createElement("button");
 
             button.className =
                 "color-button";
 
-
-            if (
-                key === selectedColor
-            ) {
-
-                button.classList.add(
-                    "selected"
-                );
+            if (key === selectedColor) {
+                button.classList.add("selected");
             }
 
 
-            const circle =
-                document.createElement(
-                    "div"
-                );
+            button.title =
+                `${color.name} — ${color.sound}`;
 
+
+            const circle =
+                document.createElement("span");
 
             circle.className =
                 "color-circle";
 
-
             circle.style.background =
-                getColor(
-                    color.hue
-                );
+                getColor(color.hue);
+
+            circle.style.color =
+                getColor(color.hue);
 
 
-            const name =
-                document.createElement(
-                    "div"
-                );
-
-
-            name.className =
-                "color-name";
-
-
-            name.textContent =
-                color.name;
-
-
-            button.appendChild(
-                circle
-            );
-
-            button.appendChild(
-                name
-            );
+            button.appendChild(circle);
 
 
             button.addEventListener(
                 "click",
                 () => {
 
-                    selectedColor =
-                        key;
+                    selectedColor = key;
 
-                    updatePalette();
+                    selectedColorName.textContent =
+                        color.name;
 
-                    updateSelectedText();
+                    createPalette();
 
                 }
             );
 
 
-            palette.appendChild(
-                button
-            );
+            paletteElement.appendChild(button);
 
         }
     );
+
 }
 
 
+createPalette();
+
+
 /* =========================================================
-   ACTUALIZAR PALETA
+   LUMINOSIDAD
    ========================================================= */
 
-function updatePalette() {
+lightnessSlider.addEventListener(
+    "input",
+    () => {
 
-    const buttons =
-        document.querySelectorAll(
-            ".color-button"
-        );
+        lightness =
+            Number(lightnessSlider.value);
+
+        lightnessValue.textContent =
+            `${lightness}%`;
+
+        createPalette();
+
+    }
+);
 
 
-    const entries =
-        Object.keys(
-            COLOR_FAMILIES
-        );
+/* =========================================================
+   TAMAÑO DEL PINCEL
+   ========================================================= */
+
+brushSizeSlider.addEventListener(
+    "input",
+    () => {
+
+        brushSize =
+            Number(brushSizeSlider.value);
+
+        brushSizeValue.textContent =
+            `${brushSize} px`;
+
+    }
+);
 
 
-    buttons.forEach(
-        (button, index) => {
+/* =========================================================
+   HERRAMIENTAS
+   ========================================================= */
 
-            button.classList.toggle(
-                "selected",
-                entries[index] ===
-                selectedColor
+toolButtons.forEach(button => {
+
+    button.addEventListener(
+        "click",
+        () => {
+
+            currentTool =
+                button.dataset.tool;
+
+
+            toolButtons.forEach(
+                otherButton => {
+
+                    otherButton.classList.remove(
+                        "active"
+                    );
+
+                }
             );
 
 
-            const circle =
-                button.querySelector(
-                    ".color-circle"
-                );
+            button.classList.add("active");
 
 
-            const color =
-                COLOR_FAMILIES[
-                    entries[index]
-                ];
-
-
-            circle.style.background =
-                getColor(
-                    color.hue
-                );
+            updateCursor();
 
         }
     );
+
+});
+
+
+function updateCursor() {
+
+    if (currentTool === "eraser") {
+
+        canvas.style.cursor = "cell";
+
+    } else {
+
+        canvas.style.cursor = "crosshair";
+
+    }
+
 }
 
 
 /* =========================================================
-   TEXTO DEL COLOR
-   ========================================================= */
-
-function updateSelectedText() {
-
-    const color =
-        COLOR_FAMILIES[
-            selectedColor
-        ];
-
-
-    selectedColorName.textContent =
-        `${color.name} — ${getSoundName(color.sound)}`;
-}
-
-
-/* =========================================================
-   NOMBRES DE SONIDOS
-   ========================================================= */
-
-function getSoundName(sound) {
-
-    const names = {
-
-        violin: "Violín",
-
-        strings: "Cuerdas",
-
-        guitar: "Guitarra",
-
-        percussion: "Percusión",
-
-        pluck: "Punteo",
-
-        bass: "Bajo",
-
-        bell: "Campana",
-
-        choir: "Coro",
-
-        piano: "Piano",
-
-        organ: "Órgano",
-
-        synth: "Sintetizador",
-
-        melody: "Melodía"
-
-    };
-
-
-    return names[sound] || sound;
-}
-
-
-/* =========================================================
-   COLOR VISUAL
-
-   Solo modifica la apariencia.
-   ========================================================= */
-
-function getColor(hue) {
-
-    return `
-        hsl(
-            ${hue},
-            80%,
-            ${lightness}%
-        )
-    `;
-}
-
-
-/* =========================================================
-   CANVAS RESPONSIVE
+   RESIZE DEL CANVAS
    ========================================================= */
 
 function resizeCanvas() {
@@ -446,17 +368,15 @@ function resizeCanvas() {
     const rect =
         canvas.getBoundingClientRect();
 
-
     const dpr =
         window.devicePixelRatio || 1;
 
 
     canvas.width =
-        rect.width * dpr;
-
+        Math.round(rect.width * dpr);
 
     canvas.height =
-        rect.height * dpr;
+        Math.round(rect.height * dpr);
 
 
     ctx.setTransform(
@@ -470,6 +390,7 @@ function resizeCanvas() {
 
 
     redraw();
+
 }
 
 
@@ -483,7 +404,7 @@ window.addEventListener(
    POSICIÓN DEL PUNTERO
    ========================================================= */
 
-function getPointerPosition(event) {
+function getCanvasPoint(event) {
 
     const rect =
         canvas.getBoundingClientRect();
@@ -491,183 +412,448 @@ function getPointerPosition(event) {
 
     return {
 
-        x:
-            event.clientX -
-            rect.left,
+        x: event.clientX - rect.left,
 
-        y:
-            event.clientY -
-            rect.top
+        y: event.clientY - rect.top
 
     };
+
 }
 
 
 /* =========================================================
-   EVENTOS PARA DIBUJAR
-
-   pointer events permiten:
-
-   - Mouse
-   - Dedo
-   - Stylus
+   POINTER DOWN
    ========================================================= */
 
 canvas.addEventListener(
     "pointerdown",
-    startDrawing
+    event => {
+
+        event.preventDefault();
+
+        canvas.setPointerCapture(
+            event.pointerId
+        );
+
+
+        const point =
+            getCanvasPoint(event);
+
+
+        isDrawing = true;
+
+        lastPointerPoint = point;
+
+
+        /* BORRADOR */
+
+        if (currentTool === "eraser") {
+
+            eraseAt(point);
+
+            return;
+
+        }
+
+
+        /* COLOR */
+
+        const color =
+            COLOR_FAMILIES[selectedColor];
+
+
+        currentStroke = {
+
+            colorKey: selectedColor,
+
+            sound: color.sound,
+
+            color: getColor(color.hue),
+
+            size: brushSize,
+
+            brushType: currentTool,
+
+            points: [point]
+
+        };
+
+
+        strokes.push(currentStroke);
+
+
+        redraw();
+
+    }
 );
 
+
+/* =========================================================
+   POINTER MOVE
+   ========================================================= */
 
 canvas.addEventListener(
     "pointermove",
-    draw
+    event => {
+
+        if (!isDrawing) {
+            return;
+        }
+
+
+        event.preventDefault();
+
+
+        const point =
+            getCanvasPoint(event);
+
+
+        /* BORRADOR */
+
+        if (currentTool === "eraser") {
+
+            eraseBetween(
+                lastPointerPoint,
+                point
+            );
+
+            lastPointerPoint =
+                point;
+
+            return;
+
+        }
+
+
+        /* PINCEL */
+
+        if (currentStroke) {
+
+            const previous =
+                currentStroke.points[
+                    currentStroke.points.length - 1
+                ];
+
+
+            const distance =
+                Math.hypot(
+                    point.x - previous.x,
+                    point.y - previous.y
+                );
+
+
+            /*
+                Guardamos bastantes puntos para que
+                el borrador y los pinceles sean suaves.
+            */
+
+            if (distance >= 1.5) {
+
+                currentStroke.points.push(
+                    point
+                );
+
+                redraw();
+
+            }
+
+        }
+
+
+        lastPointerPoint =
+            point;
+
+    }
 );
 
 
+/* =========================================================
+   POINTER UP
+   ========================================================= */
+
 canvas.addEventListener(
     "pointerup",
-    stopDrawing
+    finishDrawing
 );
 
 
 canvas.addEventListener(
     "pointercancel",
-    stopDrawing
+    finishDrawing
 );
 
 
-/* =========================================================
-   COMENZAR DIBUJO
-   ========================================================= */
-
-function startDrawing(event) {
-
-    event.preventDefault();
-
-
-    isDrawing = true;
-
-
-    canvas.setPointerCapture(
-        event.pointerId
-    );
-
-
-    const point =
-        getPointerPosition(
-            event
-        );
-
-
-    const color =
-        COLOR_FAMILIES[
-            selectedColor
-        ];
-
-
-    currentStroke = {
-
-        colorKey:
-            selectedColor,
-
-        sound:
-            color.sound,
-
-        color:
-            getColor(color.hue),
-
-        points:
-            [point]
-
-    };
-}
-
-
-/* =========================================================
-   DIBUJAR
-   ========================================================= */
-
-function draw(event) {
-
-    if (!isDrawing) {
-        return;
-    }
-
-
-    event.preventDefault();
-
-
-    const point =
-        getPointerPosition(
-            event
-        );
-
-
-    currentStroke.points.push(
-        point
-    );
-
-
-    redraw();
-}
-
-
-/* =========================================================
-   TERMINAR DIBUJO
-   ========================================================= */
-
-function stopDrawing(event) {
-
-    if (!isDrawing) {
-        return;
-    }
-
+function finishDrawing() {
 
     isDrawing = false;
 
-
-    if (
-        currentStroke &&
-        currentStroke.points.length > 0
-    ) {
-
-        strokes.push(
-            currentStroke
-        );
-    }
-
-
     currentStroke = null;
 
+    lastPointerPoint = null;
 
     redraw();
+
 }
 
 
 /* =========================================================
-   REDIBUJAR
+   DISTANCIA
+   ========================================================= */
+
+function distanceBetween(a, b) {
+
+    return Math.hypot(
+        a.x - b.x,
+        a.y - b.y
+    );
+
+}
+
+
+/* =========================================================
+   BORRADOR
+   ========================================================= */
+
+/*
+    El borrador no pinta encima del canvas.
+    Elimina partes de los trazos existentes.
+
+    De esta manera los dibujos siguen siendo vectores
+    y continúan teniendo su sonido original.
+*/
+
+function eraseAt(point) {
+
+    const radius =
+        Math.max(brushSize / 2, 3);
+
+
+    const newStrokes = [];
+
+
+    strokes.forEach(stroke => {
+
+        let segment = [];
+
+
+        stroke.points.forEach(p => {
+
+            const distance =
+                distanceBetween(
+                    p,
+                    point
+                );
+
+
+            if (distance <= radius) {
+
+                /*
+                    Terminamos el segmento
+                    que estaba siendo dibujado.
+                */
+
+                if (segment.length >= 2) {
+
+                    newStrokes.push({
+
+                        ...stroke,
+
+                        points: segment
+
+                    });
+
+                }
+
+
+                segment = [];
+
+            } else {
+
+                segment.push(p);
+
+            }
+
+        });
+
+
+        /*
+            Guardamos el último segmento.
+        */
+
+        if (segment.length >= 2) {
+
+            newStrokes.push({
+
+                ...stroke,
+
+                points: segment
+
+            });
+
+        }
+
+    });
+
+
+    strokes = newStrokes;
+
+    redraw();
+
+}
+
+
+/* =========================================================
+   BORRAR ENTRE DOS PUNTOS
+   ========================================================= */
+
+function eraseBetween(from, to) {
+
+    const distance =
+        distanceBetween(
+            from,
+            to
+        );
+
+
+    const stepSize =
+        Math.max(
+            2,
+            brushSize * 0.35
+        );
+
+
+    const steps =
+        Math.max(
+            1,
+            Math.ceil(distance / stepSize)
+        );
+
+
+    for (
+        let i = 0;
+        i <= steps;
+        i++
+    ) {
+
+        const t =
+            i / steps;
+
+
+        const point = {
+
+            x:
+                from.x +
+                (to.x - from.x) * t,
+
+            y:
+                from.y +
+                (to.y - from.y) * t
+
+        };
+
+
+        eraseAtWithoutRedraw(point);
+
+    }
+
+
+    redraw();
+
+}
+
+
+/* =========================================================
+   BORRADOR INTERNO
+   ========================================================= */
+
+function eraseAtWithoutRedraw(point) {
+
+    const radius =
+        Math.max(brushSize / 2, 3);
+
+
+    const newStrokes = [];
+
+
+    strokes.forEach(stroke => {
+
+        let segment = [];
+
+
+        stroke.points.forEach(p => {
+
+            const distance =
+                distanceBetween(
+                    p,
+                    point
+                );
+
+
+            if (distance <= radius) {
+
+                if (segment.length >= 2) {
+
+                    newStrokes.push({
+
+                        ...stroke,
+
+                        points: segment
+
+                    });
+
+                }
+
+
+                segment = [];
+
+            } else {
+
+                segment.push(p);
+
+            }
+
+        });
+
+
+        if (segment.length >= 2) {
+
+            newStrokes.push({
+
+                ...stroke,
+
+                points: segment
+
+            });
+
+        }
+
+    });
+
+
+    strokes = newStrokes;
+
+}
+
+
+/* =========================================================
+   REDIBUJAR TODO
    ========================================================= */
 
 function redraw() {
 
-    const width =
-        canvas.clientWidth;
-
-
-    const height =
-        canvas.clientHeight;
+    const rect =
+        canvas.getBoundingClientRect();
 
 
     ctx.clearRect(
         0,
         0,
-        width,
-        height
+        rect.width,
+        rect.height
     );
 
 
-    drawGrid();
+    drawBackground();
 
 
     strokes.forEach(
@@ -680,60 +866,48 @@ function redraw() {
         drawStroke(
             currentStroke
         );
+
     }
+
 }
 
 
 /* =========================================================
-   CUADRÍCULA
+   FONDO / CUADRÍCULA
    ========================================================= */
 
-function drawGrid() {
+function drawBackground() {
 
-    const width =
-        canvas.clientWidth;
-
-
-    const height =
-        canvas.clientHeight;
+    const rect =
+        canvas.getBoundingClientRect();
 
 
-    ctx.save();
+    ctx.fillStyle =
+        "#101625";
+
+
+    ctx.fillRect(
+        0,
+        0,
+        rect.width,
+        rect.height
+    );
+
+
+    const gridSize = 40;
 
 
     ctx.strokeStyle =
-        "rgba(255,255,255,0.07)";
+        "rgba(255,255,255,0.055)";
 
 
     ctx.lineWidth = 1;
 
 
     for (
-        let y = 0;
-        y < height;
-        y += 50
-    ) {
-
-        ctx.beginPath();
-
-        ctx.moveTo(
-            0,
-            y
-        );
-
-        ctx.lineTo(
-            width,
-            y
-        );
-
-        ctx.stroke();
-    }
-
-
-    for (
         let x = 0;
-        x < width;
-        x += 50
+        x <= rect.width;
+        x += gridSize
     ) {
 
         ctx.beginPath();
@@ -745,30 +919,177 @@ function drawGrid() {
 
         ctx.lineTo(
             x,
-            height
+            rect.height
         );
 
         ctx.stroke();
+
     }
 
 
-    ctx.restore();
+    for (
+        let y = 0;
+        y <= rect.height;
+        y += gridSize
+    ) {
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            0,
+            y
+        );
+
+        ctx.lineTo(
+            rect.width,
+            y
+        );
+
+        ctx.stroke();
+
+    }
+
+
+    /*
+        Líneas principales
+    */
+
+    ctx.strokeStyle =
+        "rgba(255,255,255,0.10)";
+
+
+    for (
+        let x = 0;
+        x <= rect.width;
+        x += gridSize * 4
+    ) {
+
+        ctx.beginPath();
+
+        ctx.moveTo(x, 0);
+
+        ctx.lineTo(
+            x,
+            rect.height
+        );
+
+        ctx.stroke();
+
+    }
+
+
+    for (
+        let y = 0;
+        y <= rect.height;
+        y += gridSize * 4
+    ) {
+
+        ctx.beginPath();
+
+        ctx.moveTo(0, y);
+
+        ctx.lineTo(
+            rect.width,
+            y
+        );
+
+        ctx.stroke();
+
+    }
+
 }
 
 
 /* =========================================================
-   DIBUJAR UNA LÍNEA
+   DIBUJAR TRAZO
    ========================================================= */
 
 function drawStroke(stroke) {
 
-    if (
-        !stroke.points ||
-        stroke.points.length === 0
-    ) {
+    const points =
+        stroke.points;
 
+
+    if (!points.length) {
         return;
     }
+
+
+    /*
+        PUNTO ÚNICO
+    */
+
+    if (points.length === 1) {
+
+        ctx.beginPath();
+
+        ctx.fillStyle =
+            stroke.color;
+
+        ctx.arc(
+            points[0].x,
+            points[0].y,
+            stroke.size / 2,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+        return;
+
+    }
+
+
+    /*
+        PINCEL REDONDO
+    */
+
+    if (stroke.brushType === "brush") {
+
+        drawRoundStroke(stroke);
+
+        return;
+
+    }
+
+
+    /*
+        PINCEL CON PUNTA
+    */
+
+    if (stroke.brushType === "pointed") {
+
+        drawPointedStroke(stroke);
+
+        return;
+
+    }
+
+
+    /*
+        PINCEL SUAVE
+    */
+
+    if (stroke.brushType === "soft") {
+
+        drawSoftStroke(stroke);
+
+        return;
+
+    }
+
+}
+
+
+/* =========================================================
+   PINCEL REDONDO
+   ========================================================= */
+
+function drawRoundStroke(stroke) {
+
+    const points =
+        stroke.points;
 
 
     ctx.save();
@@ -777,13 +1098,11 @@ function drawStroke(stroke) {
     ctx.strokeStyle =
         stroke.color;
 
-
-    ctx.lineWidth = 5;
-
+    ctx.lineWidth =
+        stroke.size;
 
     ctx.lineCap =
         "round";
-
 
     ctx.lineJoin =
         "round";
@@ -792,37 +1111,32 @@ function drawStroke(stroke) {
     ctx.shadowColor =
         stroke.color;
 
-
-    ctx.shadowBlur = 8;
+    ctx.shadowBlur =
+        Math.max(
+            2,
+            stroke.size * 0.35
+        );
 
 
     ctx.beginPath();
 
-
-    const first =
-        stroke.points[0];
-
-
     ctx.moveTo(
-        first.x,
-        first.y
+        points[0].x,
+        points[0].y
     );
 
 
     for (
         let i = 1;
-        i < stroke.points.length;
+        i < points.length;
         i++
     ) {
 
-        const point =
-            stroke.points[i];
-
-
         ctx.lineTo(
-            point.x,
-            point.y
+            points[i].x,
+            points[i].y
         );
+
     }
 
 
@@ -830,69 +1144,237 @@ function drawStroke(stroke) {
 
 
     ctx.restore();
+
 }
 
 
 /* =========================================================
-   LUMINOSIDAD
+   PINCEL CON PUNTA
    ========================================================= */
 
-lightnessSlider.addEventListener(
-    "input",
-    () => {
+/*
+    Este pincel comienza fino y aumenta
+    progresivamente de grosor.
 
-        lightness =
-            Number(
-                lightnessSlider.value
-            );
+    Por eso genera un extremo "puntiagudo".
+*/
 
+function drawPointedStroke(stroke) {
 
-        lightnessValue.textContent =
-            `${lightness}%`;
-
-
-        updatePalette();
-    }
-);
+    const points =
+        stroke.points;
 
 
-/* =========================================================
-   CREAR AUDIO
-   ========================================================= */
-
-function createAudioContext() {
-
-    if (audioContext) {
-
-        if (
-            audioContext.state ===
-            "suspended"
-        ) {
-
-            audioContext.resume();
-        }
-
+    if (points.length < 2) {
         return;
     }
 
 
-    const AudioContext =
-        window.AudioContext ||
-        window.webkitAudioContext;
+    ctx.save();
+
+    ctx.strokeStyle =
+        stroke.color;
+
+    ctx.lineCap =
+        "round";
+
+    ctx.lineJoin =
+        "round";
 
 
-    if (!AudioContext) {
+    ctx.shadowColor =
+        stroke.color;
 
-        alert(
-            "Tu navegador no soporta Web Audio."
+    ctx.shadowBlur =
+        Math.max(
+            1,
+            stroke.size * 0.25
         );
 
+
+    const totalSegments =
+        points.length - 1;
+
+
+    for (
+        let i = 1;
+        i < points.length;
+        i++
+    ) {
+
+        const start =
+            points[i - 1];
+
+        const end =
+            points[i];
+
+
+        const progress =
+            i / totalSegments;
+
+
+        /*
+            Empieza muy fino y aumenta.
+        */
+
+        const width =
+            Math.max(
+                1,
+                stroke.size *
+                (
+                    0.08 +
+                    progress * 0.92
+                )
+            );
+
+
+        ctx.lineWidth =
+            width;
+
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            start.x,
+            start.y
+        );
+
+        ctx.lineTo(
+            end.x,
+            end.y
+        );
+
+        ctx.stroke();
+
+    }
+
+
+    ctx.restore();
+
+}
+
+
+/* =========================================================
+   PINCEL SUAVE
+   ========================================================= */
+
+function drawSoftStroke(stroke) {
+
+    const points =
+        stroke.points;
+
+
+    ctx.save();
+
+
+    /*
+        Primera capa
+    */
+
+    ctx.globalAlpha = 0.18;
+
+    ctx.strokeStyle =
+        stroke.color;
+
+    ctx.lineWidth =
+        stroke.size * 2.2;
+
+    ctx.lineCap =
+        "round";
+
+    ctx.lineJoin =
+        "round";
+
+    ctx.shadowColor =
+        stroke.color;
+
+    ctx.shadowBlur =
+        stroke.size * 2;
+
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        points[0].x,
+        points[0].y
+    );
+
+
+    for (
+        let i = 1;
+        i < points.length;
+        i++
+    ) {
+
+        ctx.lineTo(
+            points[i].x,
+            points[i].y
+        );
+
+    }
+
+
+    ctx.stroke();
+
+
+    /*
+        Segunda capa más definida
+    */
+
+    ctx.globalAlpha = 0.65;
+
+    ctx.lineWidth =
+        stroke.size * 0.75;
+
+    ctx.shadowBlur = 0;
+
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        points[0].x,
+        points[0].y
+    );
+
+
+    for (
+        let i = 1;
+        i < points.length;
+        i++
+    ) {
+
+        ctx.lineTo(
+            points[i].x,
+            points[i].y
+        );
+
+    }
+
+
+    ctx.stroke();
+
+
+    ctx.restore();
+
+}
+
+
+/* =========================================================
+   AUDIO CONTEXT
+   ========================================================= */
+
+function setupAudio() {
+
+    if (audioContext) {
         return;
     }
 
 
     audioContext =
-        new AudioContext();
+        new (
+            window.AudioContext ||
+            window.webkitAudioContext
+        )();
 
 
     masterGain =
@@ -906,963 +1388,15 @@ function createAudioContext() {
     masterGain.connect(
         audioContext.destination
     );
+
 }
 
 
 /* =========================================================
-   REGISTRAR SONIDOS ACTIVOS
+   DETENER SONIDOS
    ========================================================= */
 
-function trackNode(node) {
-
-    activeNodes.push(
-        node
-    );
-
-
-    node.addEventListener(
-        "ended",
-        () => {
-
-            const index =
-                activeNodes.indexOf(
-                    node
-                );
-
-
-            if (index >= 0) {
-
-                activeNodes.splice(
-                    index,
-                    1
-                );
-            }
-        }
-    );
-}
-
-
-/* =========================================================
-   OSCILADOR
-   ========================================================= */
-
-function createOscillator(
-    type,
-    frequency,
-    when,
-    duration,
-    volume,
-    destination = masterGain
-) {
-
-    const osc =
-        audioContext.createOscillator();
-
-
-    const gain =
-        audioContext.createGain();
-
-
-    osc.type =
-        type;
-
-
-    osc.frequency.setValueAtTime(
-        frequency,
-        when
-    );
-
-
-    gain.gain.setValueAtTime(
-        0.0001,
-        when
-    );
-
-
-    gain.gain.exponentialRampToValueAtTime(
-        volume,
-        when + 0.015
-    );
-
-
-    gain.gain.exponentialRampToValueAtTime(
-        0.0001,
-        when + duration
-    );
-
-
-    osc.connect(gain);
-
-    gain.connect(destination);
-
-
-    osc.start(
-        when
-    );
-
-
-    osc.stop(
-        when + duration + 0.03
-    );
-
-
-    trackNode(
-        osc
-    );
-
-
-    return osc;
-}
-
-
-/* =========================================================
-   VIOLÍN
-   ========================================================= */
-
-function playViolin(
-    frequency,
-    when,
-    duration,
-    volume
-) {
-
-    const osc =
-        createOscillator(
-            "sawtooth",
-            frequency,
-            when,
-            duration,
-            volume
-        );
-
-
-    const vibrato =
-        audioContext.createOscillator();
-
-
-    const vibratoGain =
-        audioContext.createGain();
-
-
-    vibrato.frequency.value =
-        5;
-
-
-    vibratoGain.gain.value =
-        frequency * 0.015;
-
-
-    vibrato.connect(
-        vibratoGain
-    );
-
-
-    vibratoGain.connect(
-        osc.frequency
-    );
-
-
-    vibrato.start(
-        when
-    );
-
-
-    vibrato.stop(
-        when + duration
-    );
-
-
-    trackNode(
-        vibrato
-    );
-}
-
-
-/* =========================================================
-   CUERDAS
-   ========================================================= */
-
-function playStrings(
-    frequency,
-    when,
-    duration,
-    volume
-) {
-
-    createOscillator(
-        "sawtooth",
-        frequency,
-        when,
-        duration,
-        volume * 0.6
-    );
-
-
-    createOscillator(
-        "triangle",
-        frequency * 2,
-        when,
-        duration,
-        volume * 0.25
-    );
-}
-
-
-/* =========================================================
-   GUITARRA
-   ========================================================= */
-
-function playGuitar(
-    frequency,
-    when,
-    duration,
-    volume
-) {
-
-    createOscillator(
-        "triangle",
-        frequency,
-        when,
-        duration * 0.7,
-        volume
-    );
-
-
-    createOscillator(
-        "sine",
-        frequency * 2,
-        when,
-        duration * 0.35,
-        volume * 0.25
-    );
-}
-
-
-/* =========================================================
-   PUNTEO
-   ========================================================= */
-
-function playPluck(
-    frequency,
-    when,
-    duration,
-    volume
-) {
-
-    createOscillator(
-        "triangle",
-        frequency,
-        when,
-        duration * 0.45,
-        volume
-    );
-}
-
-
-/* =========================================================
-   BAJO
-   ========================================================= */
-
-function playBass(
-    frequency,
-    when,
-    duration,
-    volume
-) {
-
-    createOscillator(
-        "sine",
-        frequency / 2,
-        when,
-        duration,
-        volume * 1.2
-    );
-}
-
-
-/* =========================================================
-   CAMPANA
-   ========================================================= */
-
-function playBell(
-    frequency,
-    when,
-    duration,
-    volume
-) {
-
-    createOscillator(
-        "sine",
-        frequency,
-        when,
-        duration,
-        volume
-    );
-
-
-    createOscillator(
-        "sine",
-        frequency * 2.4,
-        when,
-        duration * 0.7,
-        volume * 0.35
-    );
-
-
-    createOscillator(
-        "sine",
-        frequency * 4.8,
-        when,
-        duration * 0.45,
-        volume * 0.15
-    );
-}
-
-
-/* =========================================================
-   CORO
-   ========================================================= */
-
-function playChoir(
-    frequency,
-    when,
-    duration,
-    volume
-) {
-
-    createOscillator(
-        "sine",
-        frequency * 0.997,
-        when,
-        duration,
-        volume * 0.6
-    );
-
-
-    createOscillator(
-        "sine",
-        frequency * 1.003,
-        when,
-        duration,
-        volume * 0.6
-    );
-
-
-    createOscillator(
-        "triangle",
-        frequency * 2,
-        when,
-        duration,
-        volume * 0.15
-    );
-}
-
-
-/* =========================================================
-   PIANO
-   ========================================================= */
-
-function playPiano(
-    frequency,
-    when,
-    duration,
-    volume
-) {
-
-    createOscillator(
-        "triangle",
-        frequency,
-        when,
-        duration * 0.8,
-        volume
-    );
-
-
-    createOscillator(
-        "sine",
-        frequency * 2,
-        when,
-        duration * 0.45,
-        volume * 0.25
-    );
-}
-
-
-/* =========================================================
-   ÓRGANO
-   ========================================================= */
-
-function playOrgan(
-    frequency,
-    when,
-    duration,
-    volume
-) {
-
-    createOscillator(
-        "sine",
-        frequency,
-        when,
-        duration,
-        volume * 0.7
-    );
-
-
-    createOscillator(
-        "sine",
-        frequency * 2,
-        when,
-        duration,
-        volume * 0.3
-    );
-
-
-    createOscillator(
-        "sine",
-        frequency * 3,
-        when,
-        duration,
-        volume * 0.12
-    );
-}
-
-
-/* =========================================================
-   SINTETIZADOR
-   ========================================================= */
-
-function playSynth(
-    frequency,
-    when,
-    duration,
-    volume
-) {
-
-    createOscillator(
-        "square",
-        frequency,
-        when,
-        duration,
-        volume * 0.45
-    );
-
-
-    createOscillator(
-        "sawtooth",
-        frequency * 1.01,
-        when,
-        duration,
-        volume * 0.25
-    );
-}
-
-
-/* =========================================================
-   MELODÍA
-
-   ROSA = MELODÍA
-   ========================================================= */
-
-function playMelody(
-    frequency,
-    when,
-    duration,
-    volume
-) {
-
-    const osc =
-        createOscillator(
-            "triangle",
-            frequency,
-            when,
-            duration,
-            volume
-        );
-
-
-    const vibrato =
-        audioContext.createOscillator();
-
-
-    const vibratoGain =
-        audioContext.createGain();
-
-
-    vibrato.frequency.value =
-        5.5;
-
-
-    vibratoGain.gain.value =
-        frequency * 0.01;
-
-
-    vibrato.connect(
-        vibratoGain
-    );
-
-
-    vibratoGain.connect(
-        osc.frequency
-    );
-
-
-    vibrato.start(
-        when
-    );
-
-
-    vibrato.stop(
-        when + duration
-    );
-
-
-    trackNode(
-        vibrato
-    );
-}
-
-
-/* =========================================================
-   PERCUSIÓN
-   ========================================================= */
-
-function playPercussion(
-    frequency,
-    when,
-    duration,
-    volume
-) {
-
-    const buffer =
-        audioContext.createBuffer(
-            1,
-            audioContext.sampleRate * 0.15,
-            audioContext.sampleRate
-        );
-
-
-    const data =
-        buffer.getChannelData(0);
-
-
-    for (
-        let i = 0;
-        i < data.length;
-        i++
-    ) {
-
-        data[i] =
-            Math.random() * 2 - 1;
-    }
-
-
-    const source =
-        audioContext.createBufferSource();
-
-
-    source.buffer =
-        buffer;
-
-
-    const filter =
-        audioContext.createBiquadFilter();
-
-
-    filter.type =
-        "bandpass";
-
-
-    filter.frequency.value =
-        Math.max(
-            100,
-            frequency
-        );
-
-
-    const gain =
-        audioContext.createGain();
-
-
-    gain.gain.setValueAtTime(
-        volume,
-        when
-    );
-
-
-    gain.gain.exponentialRampToValueAtTime(
-        0.0001,
-        when + 0.15
-    );
-
-
-    source.connect(
-        filter
-    );
-
-
-    filter.connect(
-        gain
-    );
-
-
-    gain.connect(
-        masterGain
-    );
-
-
-    source.start(
-        when
-    );
-
-
-    source.stop(
-        when + 0.16
-    );
-
-
-    trackNode(
-        source
-    );
-}
-
-
-/* =========================================================
-   ELEGIR EL INSTRUMENTO
-   ========================================================= */
-
-function playSound(
-    sound,
-    frequency,
-    when,
-    duration,
-    volume
-) {
-
-    switch (sound) {
-
-        case "violin":
-
-            playViolin(
-                frequency,
-                when,
-                duration,
-                volume
-            );
-
-            break;
-
-
-        case "strings":
-
-            playStrings(
-                frequency,
-                when,
-                duration,
-                volume
-            );
-
-            break;
-
-
-        case "guitar":
-
-            playGuitar(
-                frequency,
-                when,
-                duration,
-                volume
-            );
-
-            break;
-
-
-        case "percussion":
-
-            playPercussion(
-                frequency,
-                when,
-                duration,
-                volume
-            );
-
-            break;
-
-
-        case "pluck":
-
-            playPluck(
-                frequency,
-                when,
-                duration,
-                volume
-            );
-
-            break;
-
-
-        case "bass":
-
-            playBass(
-                frequency,
-                when,
-                duration,
-                volume
-            );
-
-            break;
-
-
-        case "bell":
-
-            playBell(
-                frequency,
-                when,
-                duration,
-                volume
-            );
-
-            break;
-
-
-        case "choir":
-
-            playChoir(
-                frequency,
-                when,
-                duration,
-                volume
-            );
-
-            break;
-
-
-        case "piano":
-
-            playPiano(
-                frequency,
-                when,
-                duration,
-                volume
-            );
-
-            break;
-
-
-        case "organ":
-
-            playOrgan(
-                frequency,
-                when,
-                duration,
-                volume
-            );
-
-            break;
-
-
-        case "synth":
-
-            playSynth(
-                frequency,
-                when,
-                duration,
-                volume
-            );
-
-            break;
-
-
-        case "melody":
-
-            playMelody(
-                frequency,
-                when,
-                duration,
-                volume
-            );
-
-            break;
-    }
-}
-
-
-/* =========================================================
-   REPRODUCIR
-   ========================================================= */
-
-playButton.addEventListener(
-    "click",
-    async () => {
-
-        if (
-            strokes.length === 0
-        ) {
-
-            alert(
-                "Primero dibuja algo en el lienzo."
-            );
-
-            return;
-        }
-
-
-        createAudioContext();
-
-
-        if (
-            audioContext.state ===
-            "suspended"
-        ) {
-
-            await audioContext.resume();
-        }
-
-
-        stopPlayback();
-
-
-        const canvasWidth =
-            canvas.clientWidth;
-
-
-        const canvasHeight =
-            canvas.clientHeight;
-
-
-        const startTime =
-            audioContext.currentTime +
-            0.15;
-
-
-        const TOTAL_TIME = 5;
-
-
-        strokes.forEach(
-            stroke => {
-
-                if (
-                    stroke.points.length === 0
-                ) {
-
-                    return;
-                }
-
-
-                /*
-                 Reducimos los puntos
-                 para que no haya demasiadas notas.
-                */
-
-                const step =
-                    Math.max(
-                        1,
-                        Math.floor(
-                            stroke.points.length /
-                            18
-                        )
-                    );
-
-
-                for (
-                    let i = 0;
-                    i < stroke.points.length;
-                    i += step
-                ) {
-
-                    const point =
-                        stroke.points[i];
-
-
-                    /*
-                     X = TIEMPO
-                     */
-
-                    const normalizedX =
-                        Math.max(
-                            0,
-                            Math.min(
-                                1,
-                                point.x /
-                                canvasWidth
-                            )
-                        );
-
-
-                    const time =
-                        normalizedX *
-                        TOTAL_TIME;
-
-
-                    /*
-                     Y = NOTA
-                     */
-
-                    const normalizedY =
-                        1 -
-                        Math.max(
-                            0,
-                            Math.min(
-                                1,
-                                point.y /
-                                canvasHeight
-                            )
-                        );
-
-
-                    const noteIndex =
-                        Math.round(
-                            normalizedY *
-                            (
-                                NOTES.length -
-                                1
-                            )
-                        );
-
-
-                    const frequency =
-                        NOTES[
-                            noteIndex
-                        ];
-
-
-                    const when =
-                        startTime +
-                        time;
-
-
-                    /*
-                     El sonido viene del
-                     COLOR ORIGINAL.
-
-                     La luminosidad no
-                     interviene aquí.
-                     */
-
-                    playSound(
-                        stroke.sound,
-                        frequency,
-                        when,
-                        0.28,
-                        0.20
-                    );
-                }
-            }
-        );
-    }
-);
-
-
-/* =========================================================
-   DETENER
-   ========================================================= */
-
-stopButton.addEventListener(
-    "click",
-    stopPlayback
-);
-
-
-function stopPlayback() {
+function stopActiveNodes() {
 
     activeNodes.forEach(
         node => {
@@ -1873,39 +1407,635 @@ function stopPlayback() {
 
             } catch (error) {
 
-                // Ya estaba detenido.
+                /* Ya estaba detenido */
+
             }
+
         }
     );
 
 
     activeNodes = [];
+
 }
 
 
 /* =========================================================
-   LIMPIAR
+   FRECUENCIA SEGÚN Y
+   ========================================================= */
+
+function getFrequencyFromY(y) {
+
+    const rect =
+        canvas.getBoundingClientRect();
+
+
+    const normalized =
+        1 -
+        Math.max(
+            0,
+            Math.min(
+                1,
+                y / rect.height
+            )
+        );
+
+
+    const index =
+        Math.round(
+            normalized *
+            (NOTES.length - 1)
+        );
+
+
+    return NOTES[index];
+
+}
+
+
+/* =========================================================
+   OSCILADOR BASE
+   ========================================================= */
+
+function createOscillatorSound(
+    frequency,
+    duration,
+    type,
+    volume,
+    startTime
+) {
+
+    const oscillator =
+        audioContext.createOscillator();
+
+
+    const gain =
+        audioContext.createGain();
+
+
+    oscillator.type =
+        type;
+
+
+    oscillator.frequency.setValueAtTime(
+        frequency,
+        startTime
+    );
+
+
+    gain.gain.setValueAtTime(
+        0,
+        startTime
+    );
+
+
+    gain.gain.linearRampToValueAtTime(
+        volume,
+        startTime + 0.015
+    );
+
+
+    gain.gain.exponentialRampToValueAtTime(
+        0.001,
+        startTime + duration
+    );
+
+
+    oscillator.connect(gain);
+
+    gain.connect(masterGain);
+
+
+    oscillator.start(startTime);
+
+    oscillator.stop(
+        startTime + duration
+    );
+
+
+    activeNodes.push(
+        oscillator
+    );
+
+}
+
+
+/* =========================================================
+   SONIDOS
+   ========================================================= */
+
+function playViolin(
+    frequency,
+    duration,
+    time
+) {
+
+    createOscillatorSound(
+        frequency,
+        duration,
+        "sawtooth",
+        0.08,
+        time
+    );
+
+}
+
+
+function playStrings(
+    frequency,
+    duration,
+    time
+) {
+
+    createOscillatorSound(
+        frequency,
+        duration,
+        "sawtooth",
+        0.06,
+        time
+    );
+
+}
+
+
+function playGuitar(
+    frequency,
+    duration,
+    time
+) {
+
+    createOscillatorSound(
+        frequency,
+        duration,
+        "triangle",
+        0.12,
+        time
+    );
+
+}
+
+
+function playPercussion(
+    frequency,
+    duration,
+    time
+) {
+
+    createOscillatorSound(
+        frequency,
+        Math.min(
+            duration,
+            0.12
+        ),
+        "square",
+        0.07,
+        time
+    );
+
+}
+
+
+function playPluck(
+    frequency,
+    duration,
+    time
+) {
+
+    createOscillatorSound(
+        frequency,
+        Math.min(
+            duration,
+            0.45
+        ),
+        "triangle",
+        0.12,
+        time
+    );
+
+}
+
+
+function playBass(
+    frequency,
+    duration,
+    time
+) {
+
+    createOscillatorSound(
+        frequency / 2,
+        duration,
+        "sine",
+        0.14,
+        time
+    );
+
+}
+
+
+function playBell(
+    frequency,
+    duration,
+    time
+) {
+
+    createOscillatorSound(
+        frequency * 2,
+        Math.min(
+            duration,
+            1
+        ),
+        "sine",
+        0.08,
+        time
+    );
+
+}
+
+
+function playChoir(
+    frequency,
+    duration,
+    time
+) {
+
+    createOscillatorSound(
+        frequency,
+        duration,
+        "sine",
+        0.07,
+        time
+    );
+
+
+    createOscillatorSound(
+        frequency * 1.5,
+        duration,
+        "sine",
+        0.035,
+        time
+    );
+
+}
+
+
+function playPiano(
+    frequency,
+    duration,
+    time
+) {
+
+    createOscillatorSound(
+        frequency,
+        Math.min(
+            duration,
+            1.5
+        ),
+        "triangle",
+        0.12,
+        time
+    );
+
+}
+
+
+function playOrgan(
+    frequency,
+    duration,
+    time
+) {
+
+    createOscillatorSound(
+        frequency,
+        duration,
+        "sine",
+        0.08,
+        time
+    );
+
+
+    createOscillatorSound(
+        frequency * 2,
+        duration,
+        "sine",
+        0.035,
+        time
+    );
+
+}
+
+
+function playSynth(
+    frequency,
+    duration,
+    time
+) {
+
+    createOscillatorSound(
+        frequency,
+        duration,
+        "sawtooth",
+        0.055,
+        time
+    );
+
+}
+
+
+function playMelody(
+    frequency,
+    duration,
+    time
+) {
+
+    createOscillatorSound(
+        frequency,
+        Math.min(
+            duration,
+            0.8
+        ),
+        "triangle",
+        0.13,
+        time
+    );
+
+}
+
+
+/* =========================================================
+   REPRODUCIR UN SONIDO
+   ========================================================= */
+
+function playSound(
+    sound,
+    frequency,
+    duration,
+    time
+) {
+
+    switch (sound) {
+
+        case "violin":
+            playViolin(
+                frequency,
+                duration,
+                time
+            );
+            break;
+
+
+        case "strings":
+            playStrings(
+                frequency,
+                duration,
+                time
+            );
+            break;
+
+
+        case "guitar":
+            playGuitar(
+                frequency,
+                duration,
+                time
+            );
+            break;
+
+
+        case "percussion":
+            playPercussion(
+                frequency,
+                duration,
+                time
+            );
+            break;
+
+
+        case "pluck":
+            playPluck(
+                frequency,
+                duration,
+                time
+            );
+            break;
+
+
+        case "bass":
+            playBass(
+                frequency,
+                duration,
+                time
+            );
+            break;
+
+
+        case "bell":
+            playBell(
+                frequency,
+                duration,
+                time
+            );
+            break;
+
+
+        case "choir":
+            playChoir(
+                frequency,
+                duration,
+                time
+            );
+            break;
+
+
+        case "piano":
+            playPiano(
+                frequency,
+                duration,
+                time
+            );
+            break;
+
+
+        case "organ":
+            playOrgan(
+                frequency,
+                duration,
+                time
+            );
+            break;
+
+
+        case "synth":
+            playSynth(
+                frequency,
+                duration,
+                time
+            );
+            break;
+
+
+        case "melody":
+            playMelody(
+                frequency,
+                duration,
+                time
+            );
+            break;
+
+    }
+
+}
+
+
+/* =========================================================
+   REPRODUCIR DIBUJO
+   ========================================================= */
+
+function playDrawing() {
+
+    setupAudio();
+
+
+    if (
+        audioContext.state ===
+        "suspended"
+    ) {
+
+        audioContext.resume();
+
+    }
+
+
+    stopActiveNodes();
+
+
+    if (!strokes.length) {
+        return;
+    }
+
+
+    const rect =
+        canvas.getBoundingClientRect();
+
+
+    const totalDuration =
+        5;
+
+
+    const now =
+        audioContext.currentTime;
+
+
+    /*
+        Cada punto de cada trazo se convierte
+        en una nota.
+
+        X = momento en el tiempo.
+        Y = altura de la nota.
+        Color = instrumento.
+    */
+
+    strokes.forEach(stroke => {
+
+        stroke.points.forEach(
+            point => {
+
+                const normalizedX =
+                    Math.max(
+                        0,
+                        Math.min(
+                            1,
+                            point.x /
+                            rect.width
+                        )
+                    );
+
+
+                const time =
+                    now +
+                    normalizedX *
+                    totalDuration;
+
+
+                const frequency =
+                    getFrequencyFromY(
+                        point.y
+                    );
+
+
+                const noteDuration =
+                    0.16;
+
+
+                playSound(
+                    stroke.sound,
+                    frequency,
+                    noteDuration,
+                    time
+                );
+
+            }
+        );
+
+    });
+
+}
+
+
+/* =========================================================
+   BOTÓN REPRODUCIR
+   ========================================================= */
+
+playButton.addEventListener(
+    "click",
+    playDrawing
+);
+
+
+/* =========================================================
+   BOTÓN DETENER
+   ========================================================= */
+
+stopButton.addEventListener(
+    "click",
+    () => {
+
+        stopActiveNodes();
+
+    }
+);
+
+
+/* =========================================================
+   BOTÓN LIMPIAR
    ========================================================= */
 
 clearButton.addEventListener(
     "click",
     () => {
 
-        stopPlayback();
+        stopActiveNodes();
 
         strokes = [];
 
+        currentStroke = null;
+
         redraw();
+
     }
 );
 
 
 /* =========================================================
-   INICIAR
+   INICIO
    ========================================================= */
 
-createPalette();
+window.addEventListener(
+    "load",
+    () => {
 
-updateSelectedText();
+        resizeCanvas();
 
-resizeCanvas();
+        updateCursor();
+
+    }
+);
